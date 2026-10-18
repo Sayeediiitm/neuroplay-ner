@@ -1,0 +1,17 @@
+{
+  "id": "adhd",
+  "displayName": "ADHD",
+  "targetPopulation": "Children and adults with Attention Deficit Hyperactivity Disorder",
+  "recommendedGames": ["target_spotting", "sequence_recall"],
+  "cognitiveDomains": ["attention", "sequencing"],
+  "accessibilityPreset": {
+    "fontSize": 16,
+    "contrast": "high",
+    "audioFirst": false,
+    "sessionLength": 10,
+    "inputMode": "touch"
+  },
+  "metricsToShow": ["accuracy", "responseTime"],
+  "safetyNotes": "Supervision recommended. No clinical claims.",
+  "clinicalReviewStatus": "unreviewed"
+}

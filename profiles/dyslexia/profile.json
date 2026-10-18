@@ -1,0 +1,17 @@
+{
+  "id": "dyslexia",
+  "displayName": "Dyslexia",
+  "targetPopulation": "Children and adults with dyslexia",
+  "recommendedGames": ["picture_match", "sequence_recall"],
+  "cognitiveDomains": ["language", "memory"],
+  "accessibilityPreset": {
+    "fontSize": 18,
+    "contrast": "high",
+    "audioFirst": true,
+    "sessionLength": 12,
+    "inputMode": "touch"
+  },
+  "metricsToShow": ["accuracy", "responseTime"],
+  "safetyNotes": "Supervision recommended. No clinical claims.",
+  "clinicalReviewStatus": "unreviewed"
+}

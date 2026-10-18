@@ -1,0 +1,17 @@
+{
+  "id": "healthy-wellness",
+  "displayName": "Healthy Wellness",
+  "targetPopulation": "General population for cognitive maintenance",
+  "recommendedGames": ["picture_match", "sequence_recall", "target_spotting"],
+  "cognitiveDomains": ["memory", "attention", "sequencing"],
+  "accessibilityPreset": {
+    "fontSize": 16,
+    "contrast": "medium",
+    "audioFirst": false,
+    "sessionLength": 10,
+    "inputMode": "touch"
+  },
+  "metricsToShow": ["accuracy", "responseTime"],
+  "safetyNotes": "No clinical claims. Use as a wellness activity.",
+  "clinicalReviewStatus": "reviewed"
+}

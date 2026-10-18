@@ -1,0 +1,17 @@
+{
+  "id": "parkinsons",
+  "displayName": "Parkinson's Disease",
+  "targetPopulation": "Adults diagnosed with Parkinson's disease",
+  "recommendedGames": ["picture_match", "sequence_recall"],
+  "cognitiveDomains": ["memory", "motor-timing"],
+  "accessibilityPreset": {
+    "fontSize": 18,
+    "contrast": "high",
+    "audioFirst": true,
+    "sessionLength": 15,
+    "inputMode": "touch"
+  },
+  "metricsToShow": ["accuracy", "responseTime"],
+  "safetyNotes": "Only cognitive and timing exercises are included. No gait or tremor assessments. Supervision recommended.",
+  "clinicalReviewStatus": "unreviewed"
+}
