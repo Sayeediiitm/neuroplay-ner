@@ -1,0 +1,49 @@
+// profiles/schema.json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ConditionProfile",
+  "type": "object",
+  "required": [
+    "id",
+    "displayName",
+    "targetPopulation",
+    "recommendedGames",
+    "cognitiveDomains",
+    "accessibilityPreset",
+    "metricsToShow",
+    "safetyNotes",
+    "clinicalReviewStatus"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "displayName": { "type": "string" },
+    "targetPopulation": { "type": "string" },
+    "recommendedGames": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "cognitiveDomains": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "accessibilityPreset": {
+      "type": "object",
+      "required": ["fontSize","contrast","audioFirst","sessionLength","inputMode"],
+      "properties": {
+        "fontSize": { "type": "number" },
+        "contrast": { "type": "string" },
+        "audioFirst": { "type": "boolean" },
+        "sessionLength": { "type": "number" },
+        "inputMode": { "type": "string" }
+      }
+    },
+    "metricsToShow": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "safetyNotes": { "type": "string" },
+    "clinicalReviewStatus": { "type": "string", "enum": ["unreviewed","reviewed"] },
+    "additionalInfo": { "type": "object" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,27 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+playwright-report/
+test-results/
+*.log
+.DS_Store
+Thumbs.db
+*.sqlite
+*.sqlite3
+*.db
+
+# Playwright test artifacts
+**/test-results/
+**/playwright-report/
+**/tests/e2e/screenshots/
+

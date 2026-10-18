@@ -1,0 +1,17 @@
+{
+  "id": "mci",
+  "displayName": "Mild Cognitive Impairment (MCI)",
+  "targetPopulation": "Adults with MCI diagnosis",
+  "recommendedGames": ["picture_match", "sequence_recall"],
+  "cognitiveDomains": ["memory", "sequencing"],
+  "accessibilityPreset": {
+    "fontSize": 18,
+    "contrast": "high",
+    "audioFirst": true,
+    "sessionLength": 12,
+    "inputMode": "touch"
+  },
+  "metricsToShow": ["accuracy", "responseTime"],
+  "safetyNotes": "Supervision recommended. No clinical claims.",
+  "clinicalReviewStatus": "unreviewed"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "dementia",
+  "displayName": "Dementia",
+  "targetPopulation": "Elderly patients with diagnosed dementia",
+  "recommendedGames": ["picture_match", "sequence_recall", "target_spotting"],
+  "cognitiveDomains": ["memory", "attention", "sequencing"],
+  "accessibilityPreset": {
+    "fontSize": 18,
+    "contrast": "high",
+    "audioFirst": true,
+    "sessionLength": 15,
+    "inputMode": "touch"
+  },
+  "metricsToShow": ["accuracy", "responseTime"],
+  "safetyNotes": "Use under supervision of caregiver. No medical claims.",
+  "clinicalReviewStatus": "unreviewed"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "post-stroke",
+  "displayName": "Post‑Stroke Rehabilitation",
+  "targetPopulation": "Adults recovering from stroke",
+  "recommendedGames": ["picture_match", "target_spotting"],
+  "cognitiveDomains": ["memory", "attention"],
+  "accessibilityPreset": {
+    "fontSize": 18,
+    "contrast": "high",
+    "audioFirst": true,
+    "sessionLength": 20,
+    "inputMode": "touch"
+  },
+  "metricsToShow": ["accuracy", "responseTime"],
+  "safetyNotes": "Supervision by therapist recommended. No clinical claims.",
+  "clinicalReviewStatus": "unreviewed"
+}
