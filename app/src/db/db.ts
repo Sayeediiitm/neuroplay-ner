@@ -25,6 +25,7 @@ export type AppEventType =
   | "game_started"
   | "game_completed"
   | "game_abandoned"
+  | "game_session"
   | "mood_logged"
   | "reminder_viewed"
   | "reminder_snoozed"
@@ -32,7 +33,9 @@ export type AppEventType =
   | "audio_prompt_played"
   | "offline_detected"
   | "sync_pushed"
-  | "difficulty_changed";
+  | "difficulty_changed"
+  | "myday_viewed"
+  | "album_viewed";
 
 // ----------------------------------------------------------------
 // Core tables
@@ -52,16 +55,23 @@ export interface Patient {
   language: string;     // 'en' | 'hi' | 'as'
   createdAt: string;
   consentGiven: 0 | 1;
+  /** Which section they use: 'memory_support' | 'neurogym' | 'both' */
+  userMode?: "memory_support" | "neurogym" | "both";
 }
 
 export interface GameSession {
   id: string;           // UUID v4
   patientId: string;
-  gameType: string;     // 'picture_match' | 'name_face' | 'word_sound'
+  /** Game identifier: 'memory_match' | 'familiar_objects' | 'story_sequence' | 'pattern_recall' |
+   *  'my_day' | 'personal_album' | 'metamind' | 'fingerflow' | 'focuslab' | 'memorysprint' |
+   *  'neurogrid' | 'memory_matching' */
+  gameType: string;
   startedAt: string;
+  endedAt: string | null;
   durationSec: number;
   scoreJson: string;    // JSON string of game-specific score object
   completed: 0 | 1;
+  difficulty: string;   // 'easy' | 'medium' | 'hard'
   synced: 0 | 1;
 }
 
@@ -82,16 +92,37 @@ export interface Reminder {
   scheduledFor: string;  // ISO date-time local
   recurring: "none" | "daily" | "weekly";
   dismissedAt: string | null;
+  /** Category: 'medication' | 'appointment' | 'activity' | 'meal' | 'other' */
+  category?: string;
+  confirmedBy?: "user" | "caregiver";
+  confirmedAt?: string | null;
 }
 
 export interface MemoryItem {
   id: string;
   patientId: string;
-  type: "photo" | "name" | "place";
+  type: "photo" | "name" | "place" | "event";
   label: string;
   blob: Blob | null;    // photo stored as Blob in IndexedDB
+  payload?: Record<string, unknown>; // extra data: relationship, note, category, etc.
   createdAt: string;
   addedBy: "patient" | "caregiver";
+  /** Category: 'family' | 'home' | 'festival' | 'event' | 'other' */
+  category?: string;
+}
+
+/** Daily routine item for My Day */
+export interface RoutineItem {
+  id: string;
+  patientId: string;
+  title: string;
+  description: string;
+  timeOfDay: string;    // HH:MM
+  icon: string;         // emoji or icon key
+  category: "meal" | "medication" | "exercise" | "appointment" | "social" | "other";
+  completedAt: string | null;
+  completedBy: "user" | "caregiver" | null;
+  date: string;         // YYYY-MM-DD
 }
 
 // ----------------------------------------------------------------
@@ -104,18 +135,29 @@ class NeuroPlayDB extends Dexie {
   mood_logs!: EntityTable<MoodLog, "id">;
   reminders!: EntityTable<Reminder, "id">;
   memory_items!: EntityTable<MemoryItem, "id">;
+  routine_items!: EntityTable<RoutineItem, "id">;
 
   constructor() {
     super("NeuroPlayNER");
 
     this.version(1).stores({
-      // Primary key first, then indexed fields
       events:        "id, type, patientId, timestamp, synced",
       patients:      "id, alias",
       game_sessions: "id, patientId, gameType, startedAt, synced",
       mood_logs:     "id, patientId, timestamp, synced",
       reminders:     "id, patientId, scheduledFor",
       memory_items:  "id, patientId, type, createdAt",
+    });
+
+    // Version 2: adds routine_items, endedAt/difficulty on game_sessions
+    this.version(2).stores({
+      events:        "id, type, patientId, timestamp, synced",
+      patients:      "id, alias",
+      game_sessions: "id, patientId, gameType, startedAt, synced",
+      mood_logs:     "id, patientId, timestamp, synced",
+      reminders:     "id, patientId, scheduledFor, category",
+      memory_items:  "id, patientId, type, createdAt, category",
+      routine_items: "id, patientId, date, category",
     });
   }
 }
@@ -127,7 +169,7 @@ export const db = new NeuroPlayDB();
 // ----------------------------------------------------------------
 export async function logEvent(
   type: AppEventType,
-  patientId: string,
+  patientId: string = "unknown",
   payload: Record<string, unknown> = {}
 ): Promise<string> {
   const id = uuidv4();
@@ -138,6 +180,42 @@ export async function logEvent(
     patientId,
     payload,
     synced: 0,
+  });
+  return id;
+}
+
+// ----------------------------------------------------------------
+// Helper: save a completed game session
+// ----------------------------------------------------------------
+export async function saveGameSession(
+  patientId: string,
+  gameType: string,
+  startedAt: string,
+  score: Record<string, unknown>,
+  completed: boolean,
+  difficulty = "easy"
+): Promise<string> {
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  const durationSec = Math.round(
+    (new Date(now).getTime() - new Date(startedAt).getTime()) / 1000
+  );
+  await db.game_sessions.add({
+    id,
+    patientId,
+    gameType,
+    startedAt,
+    endedAt: now,
+    durationSec,
+    scoreJson: JSON.stringify(score),
+    completed: completed ? 1 : 0,
+    difficulty,
+    synced: 0,
+  });
+  await logEvent(completed ? "game_completed" : "game_abandoned", patientId, {
+    gameType,
+    sessionId: id,
+    ...score,
   });
   return id;
 }
@@ -156,7 +234,24 @@ export async function getOrCreateDefaultPatient(): Promise<Patient> {
     language: "en",
     createdAt: new Date().toISOString(),
     consentGiven: 0,
+    userMode: "both",
   };
   await db.patients.add(patient);
   return patient;
+}
+
+// ----------------------------------------------------------------
+// Helper: get recent game sessions for adaptive difficulty
+// ----------------------------------------------------------------
+export async function getRecentSessions(
+  patientId: string,
+  gameType: string,
+  limit = 10
+): Promise<GameSession[]> {
+  const all = await db.game_sessions
+    .where("patientId")
+    .equals(patientId)
+    .filter((s) => s.gameType === gameType && s.completed === 1)
+    .toArray();
+  return all.slice(-limit);
 }

@@ -4,7 +4,7 @@
  * Adaptive difficulty utilities for NeuroPlay NER.
  * Pure TypeScript helpers – no side effects other than optional logging.
  */
-import { logEvent, AppEventType } from "../db/db";
+import { AppEventType } from "../db/db";
 
 /** Difficulty levels – integer 1 (easiest) to 5 (hardest) */
 export type DifficultyLevel = 1 | 2 | 3 | 4 | 5;
@@ -18,6 +18,8 @@ export interface SkillEstimate {
   avgResponseTimeMs: number;
   /** Hints usage proportion (0‑1) */
   hintsUsedRatio: number;
+  /** Number of sessions/samples in this estimate */
+  sampleCount?: number;
 }
 
 /** Estimate skill based on recent game metrics */
@@ -38,14 +40,14 @@ export function estimateSkill(
     metrics.filter((m) => m.hintsUsed).length / (metrics.length || 1);
 
   // Simple mapping: higher accuracy & faster response => higher difficulty
-  let difficulty: DifficultyLevel = 1;
+  let difficulty: DifficultyLevel;
   if (accuracy > 0.8 && avgResponseTimeMs < 2000 && hintsUsedRatio < 0.2) difficulty = 5;
   else if (accuracy > 0.7 && avgResponseTimeMs < 3000 && hintsUsedRatio < 0.3) difficulty = 4;
   else if (accuracy > 0.6 && avgResponseTimeMs < 4000 && hintsUsedRatio < 0.4) difficulty = 3;
   else if (accuracy > 0.5 && avgResponseTimeMs < 5000 && hintsUsedRatio < 0.5) difficulty = 2;
   else difficulty = 1;
 
-  return { difficulty, accuracy, avgResponseTimeMs, hintsUsedRatio };
+  return { difficulty, accuracy, avgResponseTimeMs, hintsUsedRatio, sampleCount: metrics.length };
 }
 
 /** Record a difficulty change event */
@@ -65,7 +67,6 @@ export async function recordDifficultyChange(
   // AppEventType now includes "difficulty_changed"
   const type = "difficulty_changed" as AppEventType;
   // logEvent returns the event id
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { logEvent } = await import("../db/db");
   return logEvent(type, patientId, payload);
 }
@@ -81,10 +82,16 @@ export function checkProgress(
   const avgBaseline =
     baselineMetrics.reduce((s, m) => s + m.accuracy, 0) / (baselineMetrics.length || 1);
 
+  const totalRecentSamples = recentMetrics.reduce((s, m) => s + (m.sampleCount ?? 1), 0);
+
   // ignore single day spikes – we already average over periods
   const decline = avgBaseline - avgRecent;
-  // flag if decline > 0.1 (10%) and sustained (both periods > 3 days)
-  if (decline > 0.1 && recentMetrics.length >= 3) {
+  // flag if decline > 0.2 and sustained recent data (at least 3 sessions)
+  if (
+    decline > 0.2 &&
+    totalRecentSamples >= 3 &&
+    recentMetrics.every(m => m.accuracy < avgBaseline)
+  ) {
     return "Worth discussing with a professional.";
   }
   return null;

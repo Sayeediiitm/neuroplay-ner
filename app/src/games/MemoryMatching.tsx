@@ -22,8 +22,9 @@ interface Card {
   flipped: boolean;
 }
 
-export function MemoryMatching({ difficulty, onDone }: GameProps) {
+export function MemoryMatching({ difficulty: _difficulty, onDone }: GameProps) {
   const { t } = useTranslation();
+  void _difficulty;
   const [cards, setCards] = useState<Card[]>([]);
   const [first, setFirst] = useState<Card | null>(null);
   const [correct, setCorrect] = useState(0);
